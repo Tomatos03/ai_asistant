@@ -2,7 +2,7 @@ from openai.types.chat.chat_completion_message_param import ChatCompletionMessag
 import streamlit as st
 from openai import OpenAI
 
-from config import API_KEY, BASE_URL, ENABLE_STREAMING, LAYOUT, MODEL, PAGE_TITLE, PAGE_ICON, PAGE_LOGO, REASONING_EFFORT, SIDEBAR_STATE, MENU_ITEMS
+from config import API_KEY, BASE_URL, DEFAULT_AI_ASISTANT_NICKNAME, DEFAULT_AI_ASISTANT_ROLE, ENABLE_STREAMING, LAYOUT, MODEL, PAGE_TITLE, PAGE_ICON, PAGE_LOGO, REASONING_EFFORT, SIDEBAR_STATE, MENU_ITEMS
 from models import Role
 from prompts import system_prompt
 
@@ -12,12 +12,6 @@ def stream_data(stream):
         if delta.content:
             yield delta.content
 
-messages: list[ChatCompletionMessageParam] = [
-    {"role": Role.SYSTEM, "content": system_prompt(nickname = "小智", role = "AI 助手")},
-]
-
-if "messages" not in st.session_state:
-    st.session_state.messages = messages
 
 st.set_page_config(
     page_title=PAGE_TITLE,
@@ -29,6 +23,21 @@ st.set_page_config(
 
 st.title("AI Assistant")
 st.logo(PAGE_LOGO, size="large")
+
+with st.sidebar:
+    st.subheader("系统设置")
+    st.session_state.nickname = st.text_input("昵称", placeholder="请输入 AI 助手的昵称", value=DEFAULT_AI_ASISTANT_NICKNAME)
+    st.session_state.role = st.text_input("角色", placeholder="请输入 AI 助手的角色", value=DEFAULT_AI_ASISTANT_ROLE)
+
+
+messages: list[ChatCompletionMessageParam] = [
+    {"role": Role.SYSTEM, "content": system_prompt(nickname = st.session_state.nickname, role = st.session_state.role)},
+]
+
+if "messages" not in st.session_state:
+    st.session_state.messages = messages
+else:
+    st.session_state.messages[0] = {"role": Role.SYSTEM, "content": system_prompt(nickname = st.session_state.nickname, role = st.session_state.role)}
 
 # --- 渲染历史消息 ---
 for msg in st.session_state.messages:
