@@ -23,3 +23,6 @@ ENABLE_STREAMING = True
 
 DEFAULT_AI_ASISTANT_NICKNAME = "小智"
 DEFAULT_AI_ASISTANT_ROLE = "AI 助手"
+
+# 会话历史存储目录
+HISTORY_DIR = ".dialog_history"
