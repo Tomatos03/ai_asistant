@@ -1,10 +1,10 @@
-import os
-
 from openai.types.chat.chat_completion_message_param import ChatCompletionMessageParam
 import streamlit as st
 from openai import OpenAI
 
-API_KEY = os.environ.get("DEEPSEEK_API_KEY")
+from config import API_KEY, BASE_URL, ENABLE_STREAMING, LAYOUT, MODEL, PAGE_TITLE, PAGE_ICON, PAGE_LOGO, REASONING_EFFORT, SIDEBAR_STATE, MENU_ITEMS
+from models import Role
+from prompts import system_prompt
 
 def stream_data(stream):
     for chunk in stream:
@@ -13,30 +13,26 @@ def stream_data(stream):
             yield delta.content
 
 messages: list[ChatCompletionMessageParam] = [
-    {"role": "system", "content": "你是一个有用的助手，协助用户解答问题。"}
+    {"role": Role.SYSTEM, "content": system_prompt(nickname = "小智", role = "AI 助手")},
 ]
 
 if "messages" not in st.session_state:
     st.session_state.messages = messages
 
 st.set_page_config(
-    page_title="Ex-stream-ly Cool App",
-    page_icon="🧊",
-    layout="wide",
-    initial_sidebar_state="expanded",
-    menu_items={
-        "Get Help": "https://www.extremelycoolapp.com/help",
-        "Report a bug": "https://www.extremelycoolapp.com/bug",
-        "About": "# This is a header. This is an *extremely* cool app!",
-    },
+    page_title=PAGE_TITLE,
+    page_icon=PAGE_ICON,
+    layout=LAYOUT,
+    initial_sidebar_state=SIDEBAR_STATE,
+    menu_items=MENU_ITEMS,
 )
 
 st.title("AI Assistant")
-st.logo("resource/rebot.png", size="large")
+st.logo(PAGE_LOGO, size="large")
 
 # --- 渲染历史消息 ---
 for msg in st.session_state.messages:
-    if msg["role"] == "system":
+    if msg["role"] == Role.SYSTEM:
         continue  # system message 不显示
     with st.chat_message(msg["role"]):
         if "content" in msg:
@@ -45,24 +41,24 @@ for msg in st.session_state.messages:
 prompt = st.chat_input("请输入你想要聊天的内容")
 
 if prompt:
-    with st.chat_message("user"):
+    with st.chat_message(Role.USER):
         st.write(prompt)
 
-    st.session_state.messages.append({"role": "user", "content": prompt})
+    st.session_state.messages.append({"role": Role.USER, "content": prompt})
 
-    client = OpenAI(api_key=API_KEY, base_url="https://api.deepseek.com")
+    client = OpenAI(api_key=API_KEY, base_url=BASE_URL)
     stream = client.chat.completions.create(
-        model="deepseek-v4-flash",
+        model=MODEL,
         messages=st.session_state.messages,
-        stream=True,
-        reasoning_effort="high",
+        stream=ENABLE_STREAMING,
+        reasoning_effort=REASONING_EFFORT,
         extra_body={"thinking": {"type": "enabled"}},
     )
 
-    with st.chat_message("assistant"):
+    with st.chat_message(Role.ASSISTANT):
         full_response = st.write_stream(stream_data(stream))
 
     st.session_state.messages.append({
-        "role": "assistant",
+        "role": Role.ASSISTANT,
         "content": full_response,
     })
