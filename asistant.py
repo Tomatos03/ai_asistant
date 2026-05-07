@@ -63,7 +63,11 @@ class AIAssistant:
         file_path = f"{HISTORY_DIR}/{file_name}"
         os.remove(file_path)
         if st.session_state.get("session_date") == file_name.replace(".json", ""):
-            self.reset_session()
+            history = self.get_history_session_names()
+            if history:
+                self.load_session(sorted(history, reverse=True)[0])
+            else:
+                self.reset_session()
 
     def get_history_session_names(self):
         if not os.path.exists(HISTORY_DIR):
@@ -103,6 +107,10 @@ class AIAssistant:
                 "content": full_response,
             }
         )
+
+        with open(f"{HISTORY_DIR}/{st.session_state.session_date}.json", "w") as f:
+            json.dump(st.session_state.messages, f, ensure_ascii=False, indent=2)
+        st.rerun()
 
     @staticmethod
     def stream_data(stream):

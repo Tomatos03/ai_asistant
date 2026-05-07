@@ -25,7 +25,6 @@ def render_web_info():
     st.title("AI Assistant")
     st.logo(PAGE_LOGO, size="large")
 
-
 def render_siderbar(assistant: AIAssistant):
     with st.sidebar:
         st.button("新建回话", width="stretch", on_click=assistant.new_session)
@@ -84,7 +83,8 @@ if "assistant" not in st.session_state:
 
 assistant = st.session_state.assistant
 assistant.init_session()
+
 render_web_info()
-render_siderbar(assistant)
 render_diglog_history(assistant)
+render_siderbar(assistant)
 assistant.run()
